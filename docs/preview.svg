@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+<title id="title">论文补给站暗金阅读器界面示意</title>
+<desc id="desc">展示概念卡、方法链、原图导读、自测和复习卡的界面示意。不是论文截图或实验数据。</desc>
+<defs><linearGradient id="panel" x2="1" y2="1"><stop stop-color="#302b20"/><stop offset="1" stop-color="#1c201b"/></linearGradient></defs>
+<rect width="1200" height="800" rx="20" fill="#141514"/>
+<g font-family="system-ui,-apple-system,Segoe UI,Microsoft YaHei,sans-serif">
+<text x="60" y="57" fill="#d6b879" font-size="20" letter-spacing="3">◈ 论文补给站</text>
+<text x="60" y="85" fill="#aaa697" font-size="12">PAPER TO COURSE</text>
+<rect x="990" y="35" width="150" height="39" rx="7" fill="#22241e" stroke="#75613e"/>
+<text x="1019" y="60" fill="#d6b879" font-size="15">选择论文 ⌄</text>
+<path d="M60 140H1140" stroke="#36372f"/>
+<text x="67" y="124" fill="#d6b879" font-size="16">读懂</text><text x="157" y="124" fill="#aaa697" font-size="16">自测</text><text x="247" y="124" fill="#aaa697" font-size="16">复习卡</text>
+<path d="M60 140H107" stroke="#d6b879" stroke-width="3"/>
+<rect x="60" y="170" width="1080" height="131" rx="14" fill="url(#panel)" stroke="#61533a"/>
+<g fill="none" stroke="#d6b879" opacity=".17"><circle cx="1092" cy="192" r="55"/><circle cx="1092" cy="192" r="77"/><circle cx="1092" cy="192" r="99"/></g>
+<text x="88" y="217" fill="#eee8da" font-size="27" font-weight="600">看懂作者改变了什么，以及为什么有效</text>
+<text x="88" y="257" fill="#cdc3ad" font-size="16">研究问题与困难 → 核心创新 → 完整信息链 → 实验证据 → 结论边界</text>
+<g fill="#1d201a" stroke="#3b3c30"><rect x="60" y="321" width="350" height="96" rx="9"/><rect x="425" y="321" width="350" height="96" rx="9"/><rect x="790" y="321" width="350" height="96" rx="9"/></g>
+<g fill="#d6b879" font-size="15"><text x="80" y="352">核心概念</text><text x="445" y="352">本文作用</text><text x="810" y="352">概念出处 ↗</text></g>
+<g fill="#c5c2b6" font-size="14"><text x="80" y="386">用专业术语解释“是什么”</text><text x="445" y="386">说明接收什么、产生什么</text><text x="810" y="386">回看可靠定义与来源</text></g>
+<path d="M80 463V702" stroke="#837049"/>
+<g fill="#23261e" stroke="#a48b54"><circle cx="80" cy="469" r="19"/><circle cx="80" cy="674" r="19"/></g>
+<g fill="#d6b879" text-anchor="middle" font-size="13"><text x="80" y="474">01</text><text x="80" y="679">02</text></g>
+<text x="118" y="477" fill="#ede5d3" font-size="21">把方法从输入连到输出</text>
+<g fill="#26271f" stroke="#75613e"><rect x="118" y="503" width="271" height="83" rx="9"/><rect x="437" y="503" width="271" height="83" rx="9"/><rect x="756" y="503" width="271" height="83" rx="9"/></g>
+<g fill="#e3cc98" font-size="17" text-anchor="middle"><text x="253" y="537">输入</text><text x="572" y="537">关键动作</text><text x="891" y="537">输出</text></g>
+<g fill="#bdb8a9" font-size="13" text-anchor="middle"><text x="253" y="563">研究对象与必要条件</text><text x="572" y="563">解释作者为何这样做</text><text x="891" y="563">连接对应图表和验证</text></g>
+<g stroke="#c2a464" fill="#c2a464"><path d="M399 544H425M718 544H744"/><path d="m421 540 4 4-4 4m319-8 4 4-4 4" fill="none"/></g>
+<text x="118" y="619" fill="#afa997" font-size="14">论文原图＋中文导读：看哪里、怎样比较、证据支持到哪里</text>
+<text x="118" y="681" fill="#ede5d3" font-size="21">理解之后，再自测与回忆</text>
+<text x="118" y="714" fill="#bdb8a9" font-size="14">机制解释 · 易混淆选项 · 短复习卡 · 查原文入口</text>
+<text x="60" y="766" fill="#8e897b" font-size="12">界面示意 · 非论文截图 · 原图由实际阅读材料提供</text>
+</g></svg>

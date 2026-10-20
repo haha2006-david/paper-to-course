@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+*.key
+*.pem
+*.pdf
+.DS_Store
+Thumbs.db
+audit.json
+local-papers/
+batches/

@@ -1,0 +1,438 @@
+{
+  "schema_version": 2,
+  "paper": {
+    "id": "deep-compression-public-text-demo",
+    "title": "Deep Compression · 文字演示",
+    "subtitle": "剪枝＋可训练权重共享＋Huffman：减少连接数与每连接存储位数。",
+    "url": "https://arxiv.org/pdf/1510.00149v5",
+    "access": "partial",
+    "audience": "跨专业研究生",
+    "coverage": "公开文字演示：未附论文原图。来源为arXiv:1510.00149v5；完整阅读应结合原PDF图表。"
+  },
+  "intro": "让剪枝与受训量化协同压缩，再无损编码；在所测网络上减小存储且维持分类精度。",
+  "overview": {
+    "question": "模型缩小35–49倍，为什么还能保持精度？",
+    "method": "已训练模型→剪枝并重训→聚类共享并微调→Huffman编码",
+    "result": "核心贡献是三阶段的互补组合：先减少连接，再让剩余连接共享可训练权重，最后压缩符号编码。",
+    "boundary": "“无精度损失”限所测配置；存储压缩、层内加速和整网部署性能是不同结果。",
+    "source_ids": [
+      "problem",
+      "storage",
+      "runtime"
+    ]
+  },
+  "conclusions": [
+    {
+      "text": "剪枝与受训量化可以联合使用，在所测网络上比单独使用获得更好的存储/精度权衡。",
+      "source_ids": [
+        "joint"
+      ]
+    },
+    {
+      "text": "完整流程在MNIST/ImageNet四个网络上实现约35–49倍权重存储压缩，计入索引和码本。",
+      "source_ids": [
+        "storage"
+      ]
+    },
+    {
+      "text": "所报速度/能效仅来自特定硬件、batch1的剪枝全连接层，未测完整量化模型。",
+      "source_ids": [
+        "runtime",
+        "limits"
+      ]
+    }
+  ],
+  "prerequisites": [
+    {
+      "term": "剪枝（Pruning）",
+      "explanation": "删除部分连接，保留连接构成稀疏权重矩阵；本文按权重幅值设阈值。",
+      "role": "减少存储的权重数量，删除后重训练。",
+      "verification": "paper_defined",
+      "source_ids": [
+        "prune"
+      ]
+    },
+    {
+      "term": "受训量化与码本",
+      "explanation": "将相近权重聚为一组，用一个共享值代表；码本存共享值，每个连接存组号。",
+      "role": "微调共享值；组号位宽小于32位原权重。",
+      "verification": "paper_defined",
+      "source_ids": [
+        "quant"
+      ]
+    },
+    {
+      "term": "稀疏位置索引",
+      "explanation": "记录保留连接在矩阵哪里，与选择哪个共享值的“码本索引”不同。",
+      "role": "连接删掉后仍须存位置，不能漏算这部分开销。",
+      "verification": "paper_defined",
+      "source_ids": [
+        "prune",
+        "storage"
+      ]
+    },
+    {
+      "term": "Huffman编码",
+      "explanation": "为常见符号分配短码、少见符号分配长码，可无损恢复编码前的符号。",
+      "role": "利用非均匀分布继续缩小文件，无需再训练。",
+      "verification": "paper_defined",
+      "source_ids": [
+        "huffman"
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "id": "pipeline",
+      "title": "从大模型到压缩文件：三步解决不同冗余",
+      "body": "输入是已训练模型和训练数据。访存也有成本；只减少算术操作不足以解决权重存储问题。",
+      "steps": [
+        {
+          "label": "① 剪枝 → 少存连接",
+          "text": "删除小幅值连接，重训练剩余权重；保存稀疏位置。"
+        },
+        {
+          "label": "② 受训量化 → 少存数值",
+          "text": "层内K-means聚类，只存共享值和连接组号；再微调共享值。"
+        },
+        {
+          "label": "③ Huffman → 少存编码",
+          "text": "对组号与位置差变长编码；不改变前两步得到的数值。"
+        }
+      ],
+      "output": "输出：压缩权重＋位置/码本索引＋码本；推理需要相应的稀疏与查表支持。",
+      "caution": "剪枝与Huffman是已有技术；关键在受训权重共享及三阶段可联合使用。",
+      "source_ids": [
+        "problem",
+        "prune",
+        "quant",
+        "huffman"
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "为什么强调“受训”：共享值还能适应任务",
+      "body": "权重聚类后固定组号，将同组连接的梯度相加，更新共享值；每层独立建码本。",
+      "formula": "\\[\\frac{\\partial L}{\\partial C_k}=\\sum_{i,j\\,:\\,I_{ij}=k}\\frac{\\partial L}{\\partial W_{ij}}\\]",
+      "formula_note": "\\(L\\)：任务损失；\\(C_k\\)：第k个共享值；\\(W_{ij}\\)：连接权重；\\(I_{ij}\\)：其组号。",
+      "example": "图3原例（仅量化）：16个32位权重→16个2位组号＋4个32位共享值，压缩\\(512/(32+128)=3.2\\)倍。",
+      "caution": "微调需训练数据；码本索引位宽不是整数运算精度。",
+      "source_ids": [
+        "quant"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "验证①：联合方案比单独压缩更有效",
+      "observation": "图6中，单独剪枝或量化压到约8%以下开始明显掉精度；联合方案约3%仍维持精度。",
+      "boundary": "AlexNet表7：剪枝＋量化8.9MB→再加Huffman 6.9MB；压缩倍数均相对原模型。",
+      "source_ids": [
+        "joint",
+        "compare"
+      ]
+    },
+    {
+      "claim": "验证②：存储缩小，分类误差没有升高",
+      "observation": "ImageNet：AlexNet 240→6.9MB（35倍），top-1错误42.78%不变；VGG-16 552→11.3MB（49倍），31.50%→31.17%。MNIST两种LeNet约39–40倍。",
+      "boundary": "计入位置索引和码本。更激进的AlexNet卷积/全连接4/2位量化使top-1错误增加1.99个百分点。",
+      "source_ids": [
+        "storage",
+        "tradeoff"
+      ]
+    },
+    {
+      "claim": "边界：文件更小，不保证推理始终更快",
+      "observation": "batch1剪枝全连接层在i7-5930K、Titan X、Tegra K1上平均约3–4倍加速、3–7倍能效；未测量化模型。",
+      "boundary": "表8 Titan X / AlexNet FC6：batch1每样本541.5→134.8μs；batch64反而19.8→94.6μs。GPU计时不含内存分配/传输。",
+      "source_ids": [
+        "runtime",
+        "limits"
+      ]
+    }
+  ],
+  "figures": [],
+  "sources": [
+    {
+      "id": "problem",
+      "label": "研究动机与三阶段贡献",
+      "locator": "§1 · 图1 · PDF第1–2页",
+      "pdf_pages": [
+        1,
+        2
+      ],
+      "note": "目标是降低权重存储和访存开销。剪枝、训练量化和Huffman构成互补流程，不能把已有剪枝/Huffman算法全称为本文首创。45nm能耗示例是特定工艺，不当作当前硬件规格。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "prune",
+      "label": "幅值剪枝与稀疏位置",
+      "locator": "§2 · 图2 · PDF第2–3页",
+      "pdf_pages": [
+        2,
+        3
+      ],
+      "note": "小幅值连接低于阈值即删除，随后重训练剩余连接。采用CSR/CSC并以相对位置索引表示非零权重，过长距离用填充处理。压缩存储需要计入索引。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "quant",
+      "label": "可训练量化与共享权重",
+      "locator": "§3 · 图3 · 式1–3 · PDF第3–5页",
+      "pdf_pages": [
+        3,
+        4,
+        5
+      ],
+      "note": "层内K-means聚类，不跨层共享。每个连接存码本索引，共享值在前向查表；固定共享分组后，将组内梯度相加更新质心。原图16个32位权重、4个32位质心及16个2位索引只算量化为3.2倍。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "huffman",
+      "label": "Huffman无损编码",
+      "locator": "§4–5 · 图5 · PDF第5页",
+      "pdf_pages": [
+        5
+      ],
+      "note": "对非均匀分布的权重码本索引及稀疏位置差进行变长编码，高频符号较短。训练全部结束后离线进行；无损只指编码阶段，不指剪枝与量化保留了每个原始数值。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "storage",
+      "label": "完整模型的存储与误差",
+      "locator": "§5 · 表1–5 · PDF第5–7页",
+      "pdf_pages": [
+        5,
+        6,
+        7
+      ],
+      "note": "MNIST的LeNet-300-100为40倍、LeNet-5为39倍；ImageNet ILSVRC2012有120万训练图像、5万验证图像，不做数据增强测量。AlexNet 240→6.9MB，top1错误42.78→42.78%；VGG16 552→11.3MB，31.50→31.17%。存储统计含稀疏索引和码本。未给重复训练误差条。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "joint",
+      "label": "联合压缩与量化敏感性",
+      "locator": "§6.1–6.2 · 图6–8 · PDF第7–8页",
+      "pdf_pages": [
+        7,
+        8
+      ],
+      "note": "只剪枝或只量化压到约8%以下开始明显掉精度，联合方案约3%仍维持精度。卷积层比全连接层对低位宽更敏感。线性初始化在所测设置中除3位外优于另两种，不写成永远最优。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "tradeoff",
+      "label": "过度压缩的精度代价",
+      "locator": "表6 · PDF第10页",
+      "pdf_pages": [
+        10
+      ],
+      "note": "AlexNet卷积/全连接8/5位top1误差42.78%；8/4位42.79%；4/2位44.77%，相对基准增加1.99个百分点；top5增加2.60个百分点。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "runtime",
+      "label": "运行时间与能耗的测量范围",
+      "locator": "§6.3 · 图9–10 · PDF第9–10页；附录A表8–9 · 第14页",
+      "pdf_pages": [
+        9,
+        10,
+        14
+      ],
+      "note": "仅对AlexNet/VGG16的FC6–8剪枝层，在i7-5930K、Titan X、Tegra K1上测量；batch1层内平均约3–4倍加速、约3–7倍能效。BLAS不支持共享权重查表，未测试量化模型。表8每样本时间由4096个样本平均，GPU不含cudaMalloc/cudaMemcpy；TitanX AlexNet FC6：batch1为541.5→134.8μs，batch64为19.8→94.6μs。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "compare",
+      "label": "与已有压缩方法的比较",
+      "locator": "表7 · PDF第11页",
+      "pdf_pages": [
+        11
+      ],
+      "note": "AlexNet表中P+Q为8.9MB/27倍，P+Q+H为6.9MB/35倍；剪枝行27MB/9倍未计索引，基准240MB；不能与完整统计混用。跨论文方法条件不完全一致，不宣称所有对比是受控复现。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    },
+    {
+      "id": "limits",
+      "label": "部署限制与后续工作",
+      "locator": "§8–9 · PDF第12页",
+      "pdf_pages": [
+        12
+      ],
+      "note": "完整稀疏量化模型的运行优势仍需定制GPU内核或硬件支持；本文没有给出现代Transformer/任意设备整网端到端加速的验证。后者是读者对实验范围的限定。",
+      "url": "https://arxiv.org/pdf/1510.00149v5",
+      "kind": "primary",
+      "authority": "Han, Mao & Dally · Deep Compression · ICLR 2016 · arXiv:1510.00149v5（2016-02-15）"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "为什么剪枝和权重共享可以互补，而不是压缩同一件事？",
+      "choices": [
+        "剪枝减少连接数量，共享权重降低每个保留连接的数值表示开销",
+        "剪枝减少组号位宽，共享权重减少连接数量",
+        "两者都只改变文件编码，能恢复全部原始权重",
+        "两者都只减少位置索引，不改变权重的表示"
+      ],
+      "answer": 0,
+      "explanation": "A分别对应“少存几个”和“每个少存多少”。B交换职责；C只有Huffman属于无损符号编码；D漏掉连接与数值两个主要对象。回看图1、图6。",
+      "source_ids": [
+        "prune",
+        "quant",
+        "joint"
+      ]
+    },
+    {
+      "id": "q2",
+      "prompt": "图3中多条连接共享一个值，微调时该如何更新？",
+      "choices": [
+        "各连接独立更新，随后不再共享",
+        "只用最接近原聚类中心的一条连接的梯度",
+        "把同组连接的梯度相加，更新该共享值",
+        "固定共享值，只对组号作普通连续梯度下降"
+      ],
+      "answer": 2,
+      "explanation": "C是式3的梯度累加。A破坏共享，B漏掉其他连接的损失贡献，D把组号误当成本文微调的连续参数。回看图3与§3.3。",
+      "source_ids": [
+        "quant"
+      ]
+    },
+    {
+      "id": "q3",
+      "prompt": "“AlexNet压缩35倍”最准确对应哪项测量？",
+      "choices": [
+        "全部推理操作使用不到原来1/35的算术位宽",
+        "包含位置索引和码本的权重存储约为原来的1/35",
+        "任意设备整网端到端推理约快35倍",
+        "激活、训练显存和中间缓存全部约少35倍"
+      ],
+      "answer": 1,
+      "explanation": "B对应表1、4。A混淆存储编码与算术精度；C超出了仅剪枝FC层的计时实验；D把权重存储外推到激活和训练开销。",
+      "source_ids": [
+        "storage",
+        "runtime"
+      ]
+    },
+    {
+      "id": "q4",
+      "prompt": "表8中batch64有些稀疏层更慢，最合理的理解是什么？",
+      "choices": [
+        "说明表1的压缩文件大小一定计算错误",
+        "说明batch1的所有稀疏加速结果都不能成立",
+        "说明共享权重在batch64时一定不能恢复精度",
+        "批处理提高稠密运算的数据复用，稀疏存储不保证同样的运行收益"
+      ],
+      "answer": 3,
+      "explanation": "D符合§6.3对矩阵向量/矩阵矩阵运算的区分。A混淆文件与计时，B否定了不同条件下的实测，C引入本文未测的量化模型结论。回看表8。",
+      "source_ids": [
+        "runtime"
+      ]
+    }
+  ],
+  "teach_back": {
+    "prompt": "解释三阶段各减少什么，以及为什么35倍存储压缩不能推出35倍推理加速。",
+    "checkpoints": [
+      "区分连接数、码本组号位宽和无损符号编码。",
+      "指出剪枝后重训、共享值微调及Huffman无需训练。",
+      "说明性能实验的层、硬件、batch和未测完整量化模型的限制。"
+    ]
+  },
+  "recap": {
+    "problem": "减小模型权重存储，保持任务精度。",
+    "move": "剪枝重训→聚类共享并微调→Huffman编码。",
+    "evidence": "ImageNet：AlexNet 35倍、VGG-16 49倍；所报分类错误率未升高。",
+    "boundary": "压缩倍数≠加速倍数；batch64可能更慢。",
+    "tomorrow": "三步分别减少什么？哪些阶段需要训练？"
+  },
+  "return_to_original": [
+    "复现权重共享 → §3，第3–5页：聚类、初始化、梯度和位宽。",
+    "核对存储与精度 → 表1–7，第6–11页：模型、误差和索引/码本开销。",
+    "评估部署 → §6.3及附录A，第9–10、14页：层、硬件、batch、计时与功率口径；§8第12页说明未测量化模型。"
+  ],
+  "coverage_audit": [
+    {
+      "topic": "problem",
+      "status": "covered",
+      "source_ids": [
+        "problem"
+      ],
+      "note": "动机、三阶段贡献与复用算法分开。"
+    },
+    {
+      "topic": "method",
+      "status": "partial",
+      "source_ids": [
+        "prune",
+        "quant",
+        "huffman"
+      ],
+      "note": "公开示例保留文字与来源定位，但未附原图；完整解读需结合论文原图核查。已训练权重到压缩存储；梯度累加、码本及训练/推理区分。"
+    },
+    {
+      "topic": "results",
+      "status": "partial",
+      "source_ids": [
+        "storage",
+        "compare"
+      ],
+      "note": "公开示例保留文字与来源定位，但未附原图；完整解读需结合论文原图核查。四个网络、两个数据集、实际误差与累计存储压缩。"
+    },
+    {
+      "topic": "robustness",
+      "status": "partial",
+      "source_ids": [
+        "joint",
+        "tradeoff",
+        "runtime"
+      ],
+      "note": "公开示例保留文字与来源定位，但未附原图；完整解读需结合论文原图核查。联合对照、初始化的3位例外、过度量化与batch64反例。初始化细节定位原文，不宣称所有配置无损。"
+    },
+    {
+      "topic": "conclusions",
+      "status": "covered",
+      "source_ids": [
+        "storage",
+        "joint"
+      ],
+      "note": "所测条件下维持精度的联合存储压缩。"
+    },
+    {
+      "topic": "limitations",
+      "status": "covered",
+      "source_ids": [
+        "runtime",
+        "limits"
+      ],
+      "note": "未测共享量化模型计时；层、硬件和batch范围明确。"
+    },
+    {
+      "topic": "use",
+      "status": "covered",
+      "source_ids": [
+        "quant",
+        "runtime",
+        "limits"
+      ],
+      "note": "复现参数、存储和部署查阅入口。"
+    }
+  ]
+}

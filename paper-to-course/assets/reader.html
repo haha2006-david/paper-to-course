@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__PAPER_TITLE__ · 论文补给站</title>
+<style>
+__READER_STYLE__
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="paperbar"><div><div class="brand-mark">◈ 论文补给站</div><h2 id="paper-title"></h2><div class="meta" id="paper-meta" hidden></div></div><div class="paper-actions"><button id="paper-picker" type="button" aria-haspopup="dialog" aria-controls="library-dialog" hidden>选择论文 ▾</button><a id="original" target="_blank" rel="noopener noreferrer">原文 ↗</a></div></section>
+<div class="tabs" role="tablist" aria-label="学习步骤"><button role="tab" id="tab-read" aria-controls="read" aria-selected="true" data-tab="read">读懂</button><button role="tab" id="tab-quiz" aria-controls="quiz" aria-selected="false" data-tab="quiz" tabindex="-1">自测</button><button role="tab" id="tab-recap" aria-controls="recap" aria-selected="false" data-tab="recap" tabindex="-1">复习卡</button></div>
+<section id="read" role="tabpanel" aria-labelledby="tab-read"><div id="quick-read"></div><section id="deep-read" class="paper-content"><div class="grid"><article><section id="concept-section" class="concept-section"><div id="prerequisites" class="concept-grid"></div></section><div id="lessons" class="logic-path"></div><div id="core-formula"></div><div id="evidence" class="logic-path evidence-path"></div><div id="core-boundary"></div><div class="bottom-action"><button class="primary" data-goto="quiz">检验理解 →</button></div></article></div></section></section>
+<section id="quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden><div class="grid"><article><h2 class="section-title">自测</h2><div id="questions"></div><div class="card"><h3 id="teach-prompt"></h3><textarea id="teach-answer" aria-label="你的复述" placeholder="用自己的话解释这篇论文"></textarea><p class="fine" id="save-state"></p><ul id="checkpoints"></ul></div><div class="bottom-action"><button data-goto="read">← 重点</button><button class="primary" data-goto="recap">复习卡 →</button></div></article><aside><div class="card prereqs"><h3 id="score">还没有作答</h3><p id="score-note"></p><button id="reset">重新自测</button></div></aside></div></section>
+<section id="recap" role="tabpanel" aria-labelledby="tab-recap" hidden><div class="grid"><article><h2 class="section-title">复习卡</h2><div class="card recap" id="recap-card"></div><div class="tools"><button class="primary" id="png">保存复习卡 PNG ↓</button><button id="markdown">下载讲义与作答 ↓</button></div><p class="status" id="export-status" role="status"></p></article><aside><div class="card"><button data-goto="quiz">再回忆一次 ↗</button></div></aside></div></section>
+</main>
+<dialog id="source-dialog" aria-labelledby="dialog-title"><button class="dialog-close" id="close-dialog" aria-label="关闭弹窗">×</button><div id="dialog-body"></div></dialog>
+<dialog id="library-dialog" aria-labelledby="library-title"><button class="dialog-close" id="close-library" aria-label="关闭论文列表">×</button><h3 id="library-title">本批论文</h3><nav id="paper-list" aria-label="本批论文列表"></nav></dialog>
+__MATH_ASSETS__
+<script type="application/json" id="lesson-data">__LESSON_DATA__</script>
+<script type="application/json" id="paper-library">__PAPER_LIBRARY__</script>
+<script>
+'use strict';
+const D=JSON.parse(document.getElementById('lesson-data').textContent), KEY='paper-to-course:__LESSON_KEY__', STATE_ALIASES=__STATE_ALIASES__;
+const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let state={answers:{},teach:''}, saved=true;
+for(const key of [KEY,...STATE_ALIASES]){try{const raw=localStorage.getItem(key);if(!raw)continue;const x=JSON.parse(raw);if(x&&typeof x==='object'){state.teach=typeof x.teach==='string'?x.teach:'';for(const q of D.questions){const a=x.answers?.[q.id];if(Number.isInteger(a)&&a>=0&&a<q.choices.length)state.answers[q.id]=a;}break;}}catch(e){saved=false;}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));saved=true;}catch(e){saved=false;}$('save-state').textContent=saved?'':'无法保存，请下载备份。';}
+function refs(ids,label='原文依据'){if(!ids?.length)return '';const indices=ids.map(id=>D.sources.findIndex(s=>s.id===id));return `<button class="source-btn" data-source-ids="${indices.join(',')}" aria-label="查看${esc(label)}">${esc(label)} ↗</button>`;}
+const figureKinds={original:'论文原图 / 原表',teaching:'教学示意 · 非论文原图',redrawn_data:'依据原表数据重绘'};
+function visuals(ids=[]){return ids.map(id=>{const i=(D.figures||[]).findIndex(f=>f.id===id),f=D.figures[i];return `<figure class="figure"><h4>${esc(f.title)}</h4><img src="${esc(f.image)}" alt="${esc(f.alt)}" loading="lazy" decoding="async"><figcaption>${esc(f.short_reading||f.reading)} ${refs(f.source_ids,'图表出处')}</figcaption><div class="figure-tools"><button type="button" data-figure="${i}">放大原图</button><a href="${esc(f.image)}" download="论文图解-${i+1}.png">保存原图 ↓</a></div></figure>`;}).join('');}
+function typeset(root=document.body){renderMathInElement(root,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],ignoredClasses:['katex'],throwOnError:false,trust:false,maxExpand:1000,maxSize:10,strict:'ignore'});}
+const o=D.overview;
+$('quick-read').innerHTML=`<div class="quick-heading"><h2>${esc(o?o.question:D.paper.subtitle)}</h2><p class="core-result">${esc(o?o.result:D.intro)}</p>${o?refs(o.source_ids,'核心论据'):''}</div>`;
+if(o?.formula)$('core-formula').innerHTML=`<div class="quick-formula">${esc(o.formula)}</div><p class="fine">${esc(o.formula_note||'')}</p>`;
+if(o)$('core-boundary').innerHTML=`<p class="core-boundary">${esc(o.boundary)}</p>`;
+document.body.classList.add('brief-mode');
+$('paper-title').textContent=D.paper.title;$('paper-meta').textContent=D.paper.access==='full'?'':D.paper.coverage;
+if(D.paper.access!=='full')$('paper-meta').hidden=false;
+
+if(D.paper.url){$('original').href=D.paper.url;}else{$('original').hidden=true;}
+const library=JSON.parse($('paper-library').textContent);
+if(library.length){
+  $('paper-picker').hidden=false;
+  $('paper-list').innerHTML=library.map(p=>`<a class="library-item" href="${esc(p.href)}" ${p.id===D.paper.id?'aria-current="page"':''}><span class="library-item-heading"><strong>${esc(p.title)}</strong>${p.id===D.paper.id?'<span class="current-paper">正在读</span>':''}</span><span class="library-subtitle">${esc(p.subtitle)}</span>${p.access!=='full'?'<span class="library-access">部分原文导读</span>':''}</a>`).join('');
+  $('paper-picker').onclick=()=>$('library-dialog').showModal();
+  $('close-library').onclick=()=>$('library-dialog').close();
+}
+$('prerequisites').innerHTML=D.prerequisites.map(p=>`<section class="concept-card"><h4>${esc(p.term)}</h4><p>${esc(p.explanation)}</p>${p.role?`<p class="concept-role">${esc(p.role)}</p>`:''}${refs(p.source_ids||[],'概念出处')}</section>`).join('');
+if(!D.prerequisites.length)$('concept-section').hidden=true;
+const topicNames={problem:'研究问题',method:'核心方法',results:'主要结果',robustness:'对照与稳健性',conclusions:'核心结论',limitations:'局限与边界',use:'实际使用'};
+const coverageNames={covered:'已交代',partial:'部分覆盖',unavailable:'资料缺失',not_applicable:'不适用'};
+
+$('lessons').innerHTML=D.lessons.map((l,i)=>`<section class="card path-node"><span class="path-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><h3>${esc(l.title)}</h3><p>${esc(l.body)}</p>${l.steps?`<ol class="method-steps ${l.step_layout==='parallel'?'parallel':'sequence'}">${l.steps.map(s=>`<li><strong>${esc(s.label)}</strong><p>${esc(s.text)}</p></li>`).join('')}</ol>`:''}${l.output?`<p class="flow-output">${esc(l.output)}</p>`:''}${l.example?`<div class="worked-example"><p>${esc(l.example)}</p></div>`:''}${l.formula?`<div class="inline-formula">${esc(l.formula)}<p class="fine">${esc(l.formula_note||'')}</p></div>`:''}${visuals(l.figure_ids)}<p class="caution">${esc(l.caution)}</p>${refs(l.source_ids,'方法出处')}</section>`).join('');
+$('evidence').innerHTML=D.evidence.map((e,i)=>`<section class="evidence path-node"><span class="path-number" aria-hidden="true">${String(D.lessons.length+i+1).padStart(2,'0')}</span><h4>${esc(e.claim)}</h4><p>${esc(e.observation)}</p><p class="caution">${esc(e.boundary)}</p>${refs(e.source_ids,'实验与指标')}${visuals(e.figure_ids)}</section>`).join('');
+$('teach-prompt').textContent=D.teach_back.prompt;$('teach-answer').value=state.teach;$('checkpoints').innerHTML=D.teach_back.checkpoints.map(p=>`<li>${esc(p)}</li>`).join('');
+const recapLabels={problem:'问题',move:'方法',evidence:'证据',boundary:'边界',tomorrow:'回忆一问'};
+$('recap-card').innerHTML=`<h3>${esc(D.paper.title)}</h3><dl>${Object.entries(recapLabels).filter(([k])=>k!=='tomorrow').map(([k,v])=>`<dt>${esc(v)}</dt><dd>${esc(D.recap[k])}</dd>`).join('')}</dl><div class="tomorrow"><div class="label">${recapLabels.tomorrow}</div><p>${esc(D.recap.tomorrow)}</p></div>`;
+if(D.return_to_original)$('recap-card').insertAdjacentHTML('afterend',`<details class="original-guide"><summary>查原文：复现参数、指标与实现差异</summary><ul>${D.return_to_original.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`);
+function show(tab,focus=false){for(const t of ['read','quiz','recap']){$(t).hidden=t!==tab;const b=$('tab-'+t);b.setAttribute('aria-selected',String(t===tab));b.tabIndex=t===tab?0:-1;}if(focus)$('tab-'+tab).focus();}
+document.querySelectorAll('[data-tab]').forEach(b=>{b.onclick=()=>show(b.dataset.tab);b.onkeydown=e=>{const ts=['read','quiz','recap'];let i=ts.indexOf(b.dataset.tab);if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(ts[(i+(e.key==='ArrowRight'?1:2))%3],true);}if(e.key==='Home'||e.key==='End'){e.preventDefault();show(ts[e.key==='Home'?0:2],true);}};});
+document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{show(b.dataset.goto,true);document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'});});
+function renderQuiz(){const n=D.questions.filter(q=>q.id in state.answers).length, correct=D.questions.filter(q=>state.answers[q.id]===q.answer).length;
+$('score').textContent=n?`${n} / ${D.questions.length} 已作答 · ${correct} 题答对`:'还没有作答';
+$('score-note').textContent=n?'':' ';
+$('questions').innerHTML=D.questions.map((q,i)=>{const a=state.answers[q.id],done=Number.isInteger(a);return `<section class="card"><form data-question="${i}"><fieldset class="question"><legend><span class="label">QUESTION ${String(i+1).padStart(2,'0')}</span><br>${esc(q.prompt)}</legend>${q.choices.map((c,j)=>`<label class="choice"><input type="radio" name="choice" value="${j}" ${done&&a===j?'checked':''} ${done?'disabled':''}><span>${esc(c)}</span></label>`).join('')}</fieldset>${done?`<div class="feedback ${a===q.answer?'':'wrong'}"><strong>${a===q.answer?'这题答对了':'这题值得再想想'} · 正确选项 ${q.answer+1}</strong><p>${esc(q.explanation)}</p>${refs(q.source_ids,'答案依据')}</div>`:'<button type="submit">确认答案，看解析</button><span class="fine" role="status"></span>'}</form></section>`;}).join('');
+$('questions').querySelectorAll('form').forEach(form=>form.onsubmit=e=>{e.preventDefault();const value=new FormData(form).get('choice');if(value===null){form.querySelector('[role=status]').textContent=' 请先选一个答案。';return;}const q=D.questions[Number(form.dataset.question)];state.answers[q.id]=Number(value);persist();renderQuiz();const card=$('questions').children[Number(form.dataset.question)];const feedback=card.querySelector('.feedback');feedback.tabIndex=-1;feedback.focus({preventScroll:true});});typeset($('questions'));}
+renderQuiz();persist();
+$('teach-answer').oninput=e=>{state.teach=e.target.value;persist();};
+$('reset').onclick=()=>{state.answers={};persist();renderQuiz();};
+function dialog(content){$('source-dialog').classList.remove('image-dialog');$('dialog-body').innerHTML=content;typeset($('dialog-body'));$('source-dialog').showModal();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-source-ids]');if(!b)return;const sources=b.dataset.sourceIds.split(',').map(i=>D.sources[Number(i)]);dialog(`<h3 id="dialog-title">${esc(b.textContent.replace(/ ↗$/,''))}</h3>${sources.map(s=>`<section class="source-entry"><h4>${esc(s.label)}</h4><p class="source-locator">${esc(s.locator)}</p><p>${esc(s.note)}</p>${s.authority?`<p class="fine">${esc(s.authority)}</p>`:''}${s.url?`<a href="${esc(s.kind==='primary'&&s.pdf_pages?.length?s.url.split('#')[0]+'#page='+s.pdf_pages[0]:s.url)}" target="_blank" rel="noopener noreferrer">${s.kind==='background'?'打开概念来源':'打开对应原文'} ↗</a>`:''}</section>`).join('')}`);});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-figure]');if(!b)return;const f=D.figures[Number(b.dataset.figure)];dialog(`<div class="eyebrow">${esc(figureKinds[f.kind])}</div><h3 id="dialog-title">${esc(f.title)}</h3><img src="${esc(f.image)}" alt="${esc(f.alt)}"><p>${esc(f.reading)}</p><p class="fine">${esc(f.caption)}<br>${esc(f.boundary)}</p>${refs(f.source_ids)}`);$('source-dialog').classList.add('image-dialog');});
+$('close-dialog').onclick=()=>$('source-dialog').close();
+function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+function markdown(){let t=`# ${D.paper.title}\n\n${D.paper.coverage}\n\n${D.paper.url}\n\n`;
+if(D.overview){const o=D.overview;t+=`${o.question}\n\n${o.result}\n\n`;}else{t+=`${D.intro}\n\n`;}
+for(const l of D.lessons){t+=`## ${l.title}\n\n${l.body}\n\n`;for(const s of l.steps||[])t+=`- ${s.label}：${s.text}\n`;if(l.output)t+=`\n${l.output}\n\n`;if(l.example)t+=`\n${l.example}\n\n`;if(l.formula)t+=`${l.formula}\n\n${l.formula_note||''}\n\n`;t+=`${l.caution}\n\n`;}
+for(const e of D.evidence)t+=`## ${e.claim}\n\n${e.observation}\n\n${e.boundary}\n\n`;
+if(D.overview?.formula)t+=`## 公式\n\n${D.overview.formula}\n\n${D.overview.formula_note||''}\n\n`;
+if(D.overview)t+=`${D.overview.boundary}\n\n`;
+for(const p of D.prerequisites)t+=`**${p.term}**：${p.explanation}\n\n${p.role||''}\n\n`;
+for(const f of D.figures||[])t+=`${f.title}：${f.short_reading||f.reading}（原图见HTML）\n\n`;
+t+='## 自测与作答\n\n';for(const q of D.questions)t+=`${q.prompt}\n\n${q.choices.map((c,i)=>`${i+1}. ${c}`).join('\n')}\n\n你的选项：${q.id in state.answers?state.answers[q.id]+1:'未作答'}；正确选项：${q.answer+1}\n\n${q.explanation}\n\n`;
+t+=`${D.teach_back.prompt}\n\n${state.teach||'尚未作答'}\n\n## 复习卡\n\n`;
+for(const [k,v]of Object.entries(recapLabels))t+=`${v}：${D.recap[k]}\n\n`;
+t+='## 出处\n\n';for(const [i,s]of D.sources.entries())t+=`[${i+1}] ${s.label} · ${s.locator}\n${s.authority||''}\n${s.url}\n\n`;return t;}
+$('markdown').onclick=()=>download(new Blob(['\ufeff'+markdown()],{type:'text/markdown;charset=utf-8'}),'论文讲义与作答.md');
+function makeCard(){const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');if(!ctx)throw Error('当前浏览器不支持图片导出');canvas.width=1080;canvas.height=1440;let y=0;
+function text(content,size,color,gap=0){ctx.font=`${size}px "Microsoft YaHei","PingFang SC",sans-serif`;ctx.fillStyle=color;const max=888,lines=[];for(const paragraph of content.split('\n')){let line='';for(const char of paragraph){if(ctx.measureText(line+char).width>max&&line){lines.push(line);line=char;}else line+=char;}lines.push(line);}for(const line of lines){ctx.fillText(line,96,y);y+=size*1.65;}y+=gap;}
+// Measure first so a long title or recap never gets silently cropped.
+function content(){y=98;text(D.paper.title,31,'#ece7dc',24);for(const [k,v]of Object.entries(recapLabels)){text(v,19,'#d6b879',4);text(D.recap[k],27,'#ece7dc',15);}}
+content();canvas.height=Math.max(640,Math.ceil(y+80));ctx.fillStyle='#1c1e1b';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#d6b879';ctx.fillRect(96,45,62,7);ctx.textBaseline='top';content();return canvas;}
+$('png').onclick=()=>{try{makeCard().toBlob(blob=>{if(!blob){$('export-status').textContent='图片生成失败，请下载文本。';return;}download(blob,'论文复习卡.png');$('export-status').textContent='已生成复习卡；内容较长时图片会自动加高。';},'image/png');}catch(e){$('export-status').textContent=e.message;}};
+typeset();
+</script>
+</body></html>
