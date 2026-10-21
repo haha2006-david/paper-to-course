@@ -12,28 +12,15 @@
 
 ### 1. 安装 skill
 
-核心使用通用的 `SKILL.md`、脚本、参考文件和模板结构，见 [Agent Skills 规范](https://agentskills.io/specification)。`agents/openai.yaml` 是 Codex 的界面配置，其他宿主读取核心 skill 时不依赖该配置。
+在终端运行，选择你使用的 Agent：
 
-[下载 skill ZIP](https://github.com/haha2006-david/paper-to-course/raw/refs/heads/main/downloads/paper-to-course.zip)，解压后把完整的 `paper-to-course` 文件夹放入对应目录：
-
-|工具|用户级目录|项目级目录|本项目验证情况|
-|---|---|---|---|
-|[Codex](https://learn.chatgpt.com/docs/build-skills)|`~/.agents/skills/`|`.agents/skills/`|已在本地使用并检查生成产物|
-|[Claude Code](https://code.claude.com/docs/en/skills)|`~/.claude/skills/`|`.claude/skills/`|官方格式支持，完整流程待实测|
-|[Cursor](https://cursor.com/help/customization/skills)|`~/.cursor/skills/`|`.cursor/skills/`|官方格式支持，完整流程待实测|
-
-表中的目录下面应能看到 `paper-to-course/SKILL.md`。保留脚本、模板、字体与参考文件，不只复制入口文件。具体目录发现和刷新方式以所用版本为准。
-
-Codex 也可以发送：
-
-```text
-用 $skill-installer 安装这个 skill：
-https://github.com/haha2006-david/paper-to-course/tree/main/paper-to-course
+```bash
+npx skills add haha2006-david/paper-to-course --skill paper-to-course -g
 ```
 
-在 Claude Code / Cursor 中可以通过 `/paper-to-course` 调用，也可自然语言请求使用已安装的 skill。Codex 使用 `$paper-to-course`。`$skill-installer` 是 Codex 的安装入口，不是所有宿主都有的通用命令。
+使用通用 Agent Skills 格式，包含 `SKILL.md`、脚本、参考文件和离线模板。`agents/openai.yaml` 是可选界面元数据，其他宿主无需依赖它。
 
-**支持技能格式不等于完整流程已经验证。** 完整 HTML 交付需要宿主读取 PDF、处理必要图像、运行 Python 并写出文件；公式语法检查另需 Node.js。工具或权限不足时，助手应说明缺口，不能宣称与已验证环境具有相同输出能力。
+更多安装方式（指定 Agent、无 Node、自定义 Agent 接入）及实际验证范围，见[跨 Agent 安装](install.md)。
 
 ### 2. 给论文，说需求
 

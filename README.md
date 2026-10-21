@@ -14,15 +14,15 @@
 
 ## 安装
 
-[下载 ZIP](https://github.com/haha2006-david/paper-to-course/raw/refs/heads/main/downloads/paper-to-course.zip)，解压后将完整的 `paper-to-course` 文件夹放入对应目录：
+在终端运行，选择你使用的 Agent：
 
-|工具|用户级 skills 目录|
-|---|---|
-|[Codex](https://learn.chatgpt.com/docs/build-skills)|`~/.agents/skills/`|
-|[Claude Code](https://code.claude.com/docs/en/skills)|`~/.claude/skills/`|
-|[Cursor](https://cursor.com/help/customization/skills)|`~/.cursor/skills/`|
+```bash
+npx skills add haha2006-david/paper-to-course --skill paper-to-course -g
+```
 
-目前主要在 Codex 中验证；Claude Code、Cursor 官方支持该技能格式，本项目完整流程仍待实测。宿主需具备 PDF 读取、Python 执行和文件生成能力。
+通过 [Skills CLI](https://github.com/vercel-labs/skills) 安装到 Claude Code、Codex、Cursor、Gemini CLI、OpenCode、GitHub Copilot、Windsurf、Trae 等 Agent。需要 Node.js；无 Node 或自定义 Agent 可用 [ZIP / Python 安装方式](docs/install.md)。
+
+完整阅读页需要 Agent 能读取 PDF、运行 Python、生成文件。安装兼容性与各宿主的解读效果分开验证，见[安装与验证范围](docs/install.md)。
 
 ## 使用
 
@@ -32,7 +32,7 @@
 请使用 paper-to-course 帮我理解这篇论文。
 ```
 
-也可直接调用：Codex 用 `$paper-to-course`，Claude Code / Cursor 用 `/paper-to-course`。
+也可按所用 Agent 的技能调用方式启动。
 
 **批量上传 n 篇，就能从这 n 篇里选择阅读。** 各批次分开保存，每篇都有独立自测记录。
 

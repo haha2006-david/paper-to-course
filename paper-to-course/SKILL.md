@@ -1,11 +1,14 @@
 ---
 name: paper-to-course
 description: Help readers quickly understand a scientific paper through essential concepts, concrete examples, guided original figures and rendered equations, with source-grounded evidence and limits. Use for 跨专业读懂论文、图解论文、快速理解论文、论文复习讲义. Not for full-paper translation or a formal peer-review report.
+license: MIT
 ---
 
 # 论文补给站
 
 帮助跨专业研究生快速建立理解：能说清核心概念、顺着一个具体例子解释作者的关键动作、看懂主要原图，并判断证据支持到哪里。交付的是精简的教学解读，不能把若干段浓缩摘要当成完成。复现、严谨引用和关键决策仍需定位回原文。默认中文，保留必要英文术语；给一篇论文就开始，采用已有背景与时长要求，不先发问卷。
+
+本 skill 面向通用 Agent Skills 宿主，以当前宿主可用的文件、PDF、图像和执行工具完成任务，不依赖某品牌命令或 SDK。生成 HTML 需要 Python 3.10+；Node.js 用于公式语法检查。确定当前安装根目录后再解析资源路径；需要接入自定义 Agent 或处理工具差异时读[references/portability.md](references/portability.md)。没有原生 Skills 入口也可显式读取本文件执行相同工作流；工具缺口按实际情况降级交付，不虚构兼容性。
 
 ## 固定采用的解读标准
 
