@@ -12,23 +12,35 @@
 
 ### 1. 安装 skill
 
-在支持 `$skill-installer` 的 Codex 中发送：
+核心使用通用的 `SKILL.md`、脚本、参考文件和模板结构，见 [Agent Skills 规范](https://agentskills.io/specification)。`agents/openai.yaml` 是 Codex 的界面配置，其他宿主读取核心 skill 时不依赖该配置。
+
+[下载 skill ZIP](https://github.com/haha2006-david/paper-to-course/raw/refs/heads/main/downloads/paper-to-course.zip)，解压后把完整的 `paper-to-course` 文件夹放入对应目录：
+
+|工具|用户级目录|项目级目录|本项目验证情况|
+|---|---|---|---|
+|[Codex](https://learn.chatgpt.com/docs/build-skills)|`~/.agents/skills/`|`.agents/skills/`|已在本地使用并检查生成产物|
+|[Claude Code](https://code.claude.com/docs/en/skills)|`~/.claude/skills/`|`.claude/skills/`|官方格式支持，完整流程待实测|
+|[Cursor](https://cursor.com/help/customization/skills)|`~/.cursor/skills/`|`.cursor/skills/`|官方格式支持，完整流程待实测|
+
+表中的目录下面应能看到 `paper-to-course/SKILL.md`。保留脚本、模板、字体与参考文件，不只复制入口文件。具体目录发现和刷新方式以所用版本为准。
+
+Codex 也可以发送：
 
 ```text
 用 $skill-installer 安装这个 skill：
 https://github.com/haha2006-david/paper-to-course/tree/main/paper-to-course
 ```
 
-也可以[下载 skill ZIP](https://github.com/haha2006-david/paper-to-course/raw/refs/heads/main/downloads/paper-to-course.zip)，将完整的 `paper-to-course` 文件夹放进宿主的 skills 目录。保留其中的脚本、模板、字体与参考文件，不只复制 `SKILL.md`。
+在 Claude Code / Cursor 中可以通过 `/paper-to-course` 调用，也可自然语言请求使用已安装的 skill。Codex 使用 `$paper-to-course`。`$skill-installer` 是 Codex 的安装入口，不是所有宿主都有的通用命令。
 
-Codex 当前官方文档中的用户级目录是 `~/.agents/skills/`，项目级目录是 `.agents/skills/`；其他客户端或旧版本请以实际发现目录为准。安装后如果列表未更新，可重新启动 Codex。参见[官方技能文档](https://learn.chatgpt.com/docs/build-skills)。
+**支持技能格式不等于完整流程已经验证。** 完整 HTML 交付需要宿主读取 PDF、处理必要图像、运行 Python 并写出文件；公式语法检查另需 Node.js。工具或权限不足时，助手应说明缺口，不能宣称与已验证环境具有相同输出能力。
 
 ### 2. 给论文，说需求
 
 上传一篇 PDF，然后发送：
 
 ```text
-用 $paper-to-course 帮我理解这篇论文。
+请使用 paper-to-course 帮我理解这篇论文。
 ```
 
 已有专业背景时可以直接补充，例如：
@@ -53,7 +65,7 @@ Codex 当前官方文档中的用户级目录是 `~/.agents/skills/`，项目级
 ## 一次给多篇
 
 ```text
-用 $paper-to-course 处理这次上传的3篇论文，
+请使用 paper-to-course 处理这次上传的3篇论文，
 生成同一批次的阅读页，让我能选择要读哪篇。
 ```
 

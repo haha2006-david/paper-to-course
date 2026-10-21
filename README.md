@@ -2,7 +2,7 @@
 
 **把论文变成易理解的阅读页：概念 → 方法链 → 原图与证据 → 自测 → 复习卡。**
 
-适合跨专业读论文、刚进入新方向的研究生。配合 AI 助手使用，生成可离线打开的 HTML。
+适合跨专业读论文、刚进入新方向的研究生。配合支持 Agent Skills 的 AI 助手使用，生成可离线打开的 HTML。
 
 ![暗金阅读器界面示意](docs/preview.svg)
 
@@ -14,22 +14,25 @@
 
 ## 安装
 
-在支持 skill 的 Codex 中发送：
+[下载 ZIP](https://github.com/haha2006-david/paper-to-course/raw/refs/heads/main/downloads/paper-to-course.zip)，解压后将完整的 `paper-to-course` 文件夹放入对应目录：
 
-```text
-用 $skill-installer 安装：
-https://github.com/haha2006-david/paper-to-course/tree/main/paper-to-course
-```
+|工具|用户级 skills 目录|
+|---|---|
+|[Codex](https://learn.chatgpt.com/docs/build-skills)|`~/.agents/skills/`|
+|[Claude Code](https://code.claude.com/docs/en/skills)|`~/.claude/skills/`|
+|[Cursor](https://cursor.com/help/customization/skills)|`~/.cursor/skills/`|
 
-也可以[下载 ZIP](https://github.com/haha2006-david/paper-to-course/raw/refs/heads/main/downloads/paper-to-course.zip)，将完整文件夹放入宿主的 skills 目录。
+目前主要在 Codex 中验证；Claude Code、Cursor 官方支持该技能格式，本项目完整流程仍待实测。宿主需具备 PDF 读取、Python 执行和文件生成能力。
 
 ## 使用
 
 上传 PDF，发送：
 
 ```text
-用 $paper-to-course 帮我理解这篇论文。
+请使用 paper-to-course 帮我理解这篇论文。
 ```
+
+也可直接调用：Codex 用 `$paper-to-course`，Claude Code / Cursor 用 `/paper-to-course`。
 
 **批量上传 n 篇，就能从这 n 篇里选择阅读。** 各批次分开保存，每篇都有独立自测记录。
 
